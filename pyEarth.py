@@ -28,9 +28,9 @@ class GLWidget(QtOpenGL.QGLWidget):
     
     def __init__(self, parent=None):
         super(GLWidget, self).__init__(parent)
-        self.xRot = 0
-        self.yRot = 0
-        self.zRot = 0
+        self.x_rotation = 0
+        self.y_rotation = 0
+        self.z_rotation = 0
         self.gear1Rot = 0
         
         # Number of latitudes in sphere
@@ -45,40 +45,8 @@ class GLWidget(QtOpenGL.QGLWidget):
         timer.timeout.connect(self.advanceGears)
         timer.start(20)
 
-    def setXRotation(self, angle):
-        self.normalizeAngle(angle)
-
-        if angle != self.xRot:
-            self.xRot = angle
-            # self.xRotationChanged.emit(angle)
-            self.updateGL()
-
-    def setYRotation(self, angle):
-        self.normalizeAngle(angle)
-
-        if angle != self.yRot:
-            self.yRot = angle
-            # self.yRotationChanged.emit(angle)
-            self.updateGL()
-
-    def setZRotation(self, angle):
-        self.normalizeAngle(angle)
-
-        if angle != self.zRot:
-            self.zRot = angle
-            # self.zRotationChanged.emit(angle)
-            self.updateGL()
-
     def initializeGL(self):
-
-        reflectance3 = (0., 0., 1.0, 1.0)
-
-        # glEnable(GL_LIGHTING)
-        # glEnable(GL_LIGHT0)
-        # glEnable(GL_DEPTH_TEST)
-
-        # self.gear1 = self.makeGear(reflectance3)
-        self.gear2 = self.makeGear2(reflectance3)
+        self.polygons = self.create_polygons()
 
         glEnable(GL_NORMALIZE)
 
@@ -86,9 +54,9 @@ class GLWidget(QtOpenGL.QGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         glPushMatrix()
-        glRotated(self.xRot / 16.0, 1.0, 0.0, 0.0)
-        glRotated(self.yRot / 16.0, 0.0, 1.0, 0.0)
-        glRotated(self.zRot / 16.0, 0.0, 0.0, 1.0)
+        glRotated(self.x_rotation / 16.0, 1.0, 0.0, 0.0)
+        glRotated(self.y_rotation / 16.0, 0.0, 1.0, 0.0)
+        glRotated(self.z_rotation / 16.0, 0.0, 0.0, 1.0)
         
         quad = gluNewQuadric()
         gluQuadricNormals(quad, GLU_SMOOTH)
@@ -98,7 +66,7 @@ class GLWidget(QtOpenGL.QGLWidget):
         glColor(0, 0, 0)
         # glFlush()
 
-        self.drawGear(self.gear2, 0.0, 0.0, 0.0, self.gear1Rot / 50.0)
+        self.drawGear(self.polygons, 0.0, 0.0, 0.0, self.gear1Rot / 50.0)
 
         glPopMatrix()
 
@@ -119,29 +87,20 @@ class GLWidget(QtOpenGL.QGLWidget):
         dx = event.x() - self.lastPos.x()
         dy = event.y() - self.lastPos.y()
 
-        if event.buttons() & Qt.LeftButton:
-            self.setXRotation(self.xRot + 8 * dy)
-            self.setYRotation(self.yRot + 8 * dx)
-        elif event.buttons() & Qt.RightButton:
-            self.setXRotation(self.xRot + 8 * dy)
-            self.setZRotation(self.zRot + 8 * dx)
+        if event.buttons() and Qt.LeftButton:
+            self.x_rotation += 8 * dy
+            self.y_rotation += 8 * dx
+        elif event.buttons() and Qt.RightButton:
+            self.x_rotation += 8 * dy
+            self.z_rotation += 8 * dx
 
         self.lastPos = event.pos()
 
     def advanceGears(self):
         self.gear1Rot += 2 * 8
         self.updateGL()    
-
-    def xRotation(self):
-        return self.xRot
-
-    def yRotation(self):
-        return self.yRot
-
-    def zRotation(self):
-        return self.zRot
         
-    def makeGear2(self, reflectance):
+    def create_polygons(self):
         list = glGenLists(1)
         glNewList(list, GL_COMPILE)
         # glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, reflectance)
@@ -201,14 +160,6 @@ class GLWidget(QtOpenGL.QGLWidget):
         glRotated(angle, 0.0, 0.0, 1.0)
         glCallList(gear)
         glPopMatrix()
-
-    def normalizeAngle(self, angle):
-        while (angle < 0):
-            angle += 360 * 16
-
-        while (angle > 360 * 16):
-            angle -= 360 * 16
-
 
 class MainWindow(QMainWindow):
     def __init__(self):        
