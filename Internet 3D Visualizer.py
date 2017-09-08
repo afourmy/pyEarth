@@ -1,22 +1,60 @@
 import sys
+from inspect import stack
+from os.path import abspath, dirname
+
+# prevent python from writing *.pyc files / __pycache__ folders
+sys.dont_write_bytecode = True
+
+path_app = dirname(abspath(stack()[0][1]))
+
+if path_app not in sys.path:
+    sys.path.append(path_app)
+
+import sys
+import math
 from math import sin, radians
-import pyproj, shapefile, shapely.geometry
-from OpenGL.GL import *
-from OpenGL.GLU import *
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5 import QtOpenGL
+from math import *
+import pyproj, shapefile, shapely.geometry
+from OpenGL.GL import *
+from OpenGL.GLU import *
+
+class Camera():
+    
+    def __init__(self):
+        self.x, self.y, self.z = 0, 0, 50
+        self.cx, self.cy, self.cz = 0, 0, -1
+        self.ux, self.uy, self.uz = 0, 1, 0
+        
+    def render(self):
+        return (self.x, self.y, self.z, self.cx, self.cy, self.cz, self.ux, self.uy, self.uz)
     
 class View(QOpenGLWidget):
     
-    def __init__(self, parent=None):
+    def __init__(self, path_app, parent=None):
         super().__init__(parent)
-        for coord in ('x', 'y', 'z', 'cx', 'cy', 'cz', 'rx', 'ry', 'rz'):
-            setattr(self, coord, 50 if coord == 'z' else 0)
-      
+        self.path_app = path_app
+        self.x_rotation = 0
+        self.y_rotation = 0
+        self.z_rotation = 0
+        self.gear1Rot = 0
+        
+        # Number of latitudes in sphere
+        self.lats = 100
+
+        # Number of longitudes in sphere
+        self.longs = 100
+        
+        self.camera = Camera()
+        
+        self.factor = 1
+        
         self.shapefile = 'C:\\Users\\minto\\Desktop\\pyGISS\\shapefiles\\World countries.shp'
     
-    # def rotate(self):
         timer = QTimer(self)
         timer.timeout.connect(self.advanceGears)
         timer.start(20)
@@ -25,6 +63,7 @@ class View(QOpenGLWidget):
         glMatrixMode(GL_PROJECTION)
         glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 60.0)
         self.create_polygons()
+        self.create_node(28, 47)
         glEnable(GL_NORMALIZE)
         
     def paintGL(self):
@@ -39,33 +78,70 @@ class View(QOpenGLWidget):
 
         glColor(0, 255, 0)
         glPushMatrix()
-        glRotated(self.rx / 16.0, 1.0, 0.0, 0.0)
-        glRotated(self.ry / 16.0, 0.0, 1.0, 0.0)
-        glRotated(self.rz / 16.0, 0.0, 0.0, 1.0)
+        glRotated(self.x_rotation / 16.0, 1.0, 0.0, 0.0)
+        glRotated(self.y_rotation / 16.0, 0.0, 1.0, 0.0)
+        glRotated(self.z_rotation / 16.0, 0.0, 0.0, 1.0)
         glCallList(self.polygons)
         glPopMatrix()
         
+
+        self.create_node(28, 47)
+        self.create_node(2, 48)
+        self.create_link(28, 47, 2, 48)
+        
+        
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        gluLookAt(self.x, self.y, self.z, self.cx, self.cy, self.cz, 0, 1, 0)
+        gluLookAt(*self.camera.render())
+        
+    def create_link(self, lon1, lat1, lon2, lat2):
+        glColor(255, 0, 0)
+        x1, y1, z1 = self.pyproj_LLH_to_ECEF(lat1, lon1, 70000)
+        x2, y2, z2 = self.pyproj_LLH_to_ECEF(lat2, lon2, 70000)
+        glBegin(GL_LINES)
+        glVertex3f(x1, y1, z1)
+        glVertex3f(x2, y2, z2)
+        glEnd()
+        
+    def create_node(self, longitude, latitude):
+        glPushMatrix()
+        x, y, z = self.pyproj_LLH_to_ECEF(latitude, longitude, 70000)
+        glTranslatef(x, y, z)
+        node = gluNewQuadric()
+        gluQuadricNormals(node, GLU_SMOOTH)
+        glColor(255, 255, 0)
+        glEnable(GL_DEPTH_TEST)
+        self.node = gluSphere(node, 0.05, 100, 100)
+        glPopMatrix()
+
+    # def resizeGL(self, w, h):
+
         
     def mousePressEvent(self, event):
         self.last_position = event.pos()
         
     def wheelEvent(self, event):
-        self.z += -2 if event.angleDelta().y() > 0 else 2
+        self.camera.z += -2 if event.angleDelta().y() > 0 else 2
 
     def mouseMoveEvent(self, event):
-        dx, dy = event.x() - self.last_position.x(), event.y() - self.last_position.y()
-        if event.buttons() == Qt.LeftButton:
-            self.rx, self.ry = self.rx + 8 * dy, self.ry + 8 * dx
-        elif event.buttons() == Qt.RightButton:
-            self.cx, self.cy = self.cx - dx/50, self.cy + dy/50
+        dx = event.x() - self.last_position.x()
+        dy = event.y() - self.last_position.y()
+        
+        self.camera.cx -= dx/50
+        self.camera.cy += dy/50
+
+        if event.buttons() and Qt.LeftButton:
+            self.x_rotation += 8 * dy
+            self.y_rotation += 8 * dx
+        elif event.buttons() and Qt.RightButton:
+            self.x_rotation += 8 * dy
+            self.z_rotation += 8 * dx
+
         self.last_position = event.pos()
 
     def advanceGears(self):
-        self.rx += 8
-        self.ry += 8
+        self.x_rotation += 8
+        self.y_rotation += 8
         self.update()    
         
     def create_polygons(self):
@@ -76,8 +152,10 @@ class View(QOpenGLWidget):
             glColor(0, 255, 0)
             glLineWidth(2)
             glBegin(GL_LINE_LOOP)
-            for (lon, lat) in polygon:
-                glVertex3f(*self.pyproj_LLH_to_ECEF(lat, lon, 1))
+            for point in polygon:
+                lon, lat = point
+                x, y, z = self.pyproj_LLH_to_ECEF(lat, lon, 1)
+                glVertex3f(x, y, z)
             glEnd()
         glEndList()
         
@@ -96,8 +174,8 @@ class View(QOpenGLWidget):
     def LLHtoECEF(self, lat, lon, alt):
         # see http://www.mathworks.de/help/toolbox/aeroblks/llatoecefposition.html
         import numpy as np
-        rad = np.float64(6378137.0)
-        f = np.float64(1.0/298.257223563)
+        rad = np.float64(6378137.0)        # Radius of the Earth (in meters)
+        f = np.float64(1.0/298.257223563)  # Flattening factor WGS84 Model
         np.cosLat = np.cos(lat)
         np.sinLat = np.sin(lat)
         FF     = (1.0-f)**2
@@ -116,7 +194,7 @@ class View(QOpenGLWidget):
         return x/1000000, y/1000000, z/1000000
 
 class PyEarth(QMainWindow):
-    def __init__(self):        
+    def __init__(self, path_app):        
         super().__init__()
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
@@ -124,7 +202,7 @@ class PyEarth(QMainWindow):
         import_shapefile = QAction('Import shapefile', self)
         import_shapefile.triggered.connect(self.import_shapefile)
         menu_bar.addAction(import_shapefile)
-        self.view = View()
+        self.view = View(path_app)
         layout = QGridLayout(central_widget)
         layout.addWidget(self.view, 0, 0)
                 
@@ -134,7 +212,7 @@ class PyEarth(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PyEarth()
+    window = PyEarth(path_app)
     window.setWindowTitle('pyGISS: a lightweight GIS software')
     window.setFixedSize(900, 900)
     window.show()
