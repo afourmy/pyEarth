@@ -15,13 +15,10 @@ class View(QOpenGLWidget):
             setattr(self, coord, 50 if coord == 'z' else 0)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.rotate)
-      
-        self.shapefile = 'C:\\Users\\minto\\Desktop\\pyGISS\\shapefiles\\World countries.shp'
 
     def initializeGL(self):
         glMatrixMode(GL_PROJECTION)
         glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 60.0)
-        self.create_polygons()
 
     def paintGL(self):
         glEnable(GL_DEPTH_TEST)
@@ -29,12 +26,13 @@ class View(QOpenGLWidget):
         glColor(0, 0, 255)
         self.sphere = gluSphere(self.quad, 6378137/1000000 - 0.025, 100, 100)
         
-        glPushMatrix()
-        glRotated(self.rx/16, 1, 0, 0)
-        glRotated(self.ry/16, 0, 1, 0)
-        glRotated(self.rz/16, 0, 0, 1)
-        glCallList(self.polygons)
-        glPopMatrix()
+        if hasattr(self, 'polygons'):
+            glPushMatrix()
+            glRotated(self.rx/16, 1, 0, 0)
+            glRotated(self.ry/16, 0, 1, 0)
+            glRotated(self.rz/16, 0, 0, 1)
+            glCallList(self.polygons)
+            glPopMatrix()
         
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -70,44 +68,11 @@ class View(QOpenGLWidget):
         glNewList(self.polygons, GL_COMPILE)
         for polygon in self.draw_polygons():
             glColor(0, 255, 0)
-            vertices = self.triangulate(polygon)
-            glBegin(GL_TRIANGLES)
-            for vertex in vertices:
-                glVertex(*vertex)
+            glBegin(GL_LINE_LOOP)
+            for (lon, lat) in polygon:
+                glVertex3f(*self.LLH_to_ECEF(lat, lon, 1))
             glEnd()
-            # glBegin(GL_POLYGON)
-            # for (lon, lat) in polygon:
-            #     glVertex3f(*self.LLH_to_ECEF(lat, lon, 1))
-            # glEnd()
         glEndList()
-        
-    def triangulate(self, polygon):
-        vertices = []
-        
-        def edgeFlagCallback(param1, param2): pass
-        def beginCallback(param=None):
-            vertices = []
-        def vertexCallback(vertex, otherData=None):
-            vertices.append(vertex)
-        def endCallback(data=None): pass
-    
-        tess = gluNewTess()
-        gluTessProperty(tess, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD)
-        gluTessCallback(tess, GLU_TESS_EDGE_FLAG_DATA, edgeFlagCallback)
-        gluTessCallback(tess, GLU_TESS_BEGIN, beginCallback)
-        gluTessCallback(tess, GLU_TESS_VERTEX, vertexCallback)
-        gluTessCallback(tess, GLU_TESS_END, endCallback)
-        
-        gluTessBeginPolygon(tess, 0)
-        gluTessBeginContour(tess)
-        for (lon, lat) in polygon:
-            x, y, z = self.LLH_to_ECEF(lat, lon, 1)
-            point3d = (x, y, z)
-            gluTessVertex(tess, point3d, point3d)
-        gluTessEndContour(tess)
-        gluTessEndPolygon(tess)
-        gluDeleteTess(tess)
-        return vertices
         
     def draw_polygons(self):
         sf = shapefile.Reader(self.shapefile)       
