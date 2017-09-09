@@ -8,8 +8,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from os.path import abspath, dirname, join, pardir
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QGridLayout, 
-                                    QMainWindow, QWidget, QOpenGLWidget)
+from PyQt5.QtWidgets import *
 try:
     import simplekml
 except ImportError:
@@ -144,6 +143,79 @@ class Link():
         self.destination = controller.view.nodes[kwargs['destination']]
         self.coords = [self.source.coords[0], self.destination.coords[0]]
         controller.view.links[self.name] = self
+        
+class GoogleEarthExport(QWidget):  
+
+    def __init__(self, controller):
+        super().__init__()
+        self.controller = controller
+        self.setWindowTitle('Export to Google Earth')
+        
+        layout = QGridLayout()
+        
+        node_size = QLabel('Node size')
+        self.node_size = QLineEdit('2')
+        
+        self.path_edit = QLineEdit()
+        path = 'https://raw.githubusercontent.com/afourmy/pyEarth/master/images/node.png'
+        self.path_edit.setText(path)
+        
+        line_width = QLabel('Line width')
+        self.line_width = QLineEdit('2')
+        
+        path_to_icon = QPushButton('Node icon')
+        path_to_icon.clicked.connect(self.choose_path)
+        
+        export = QPushButton('Export to KML')
+        export.clicked.connect(self.kml_export)
+        
+        layout = QGridLayout()
+        layout.addWidget(node_size, 0, 0)
+        layout.addWidget(self.node_size, 0, 1)
+        layout.addWidget(self.path_edit, 1, 0, 1, 2)
+        layout.addWidget(line_width, 2, 0)
+        layout.addWidget(self.line_width, 2, 1)
+        layout.addWidget(path_to_icon, 3, 0)
+        layout.addWidget(export, 3, 1)
+        self.setLayout(layout)
+        
+    def kml_export(self):
+        kml = simplekml.Kml()
+        
+        point_style = simplekml.Style()
+        point_style.labelstyle.color = simplekml.Color.blue
+        point_style.labelstyle.scale = float(self.node_size.text())
+        point_style.iconstyle.icon.href = self.path_edit.text()
+        
+        for node in self.controller.view.nodes.values():
+            point = kml.newpoint(name=node.name, description=node.description)
+            point.coords = node.coords
+            point.style = point_style
+            
+        line_style = simplekml.Style()
+        line_style.linestyle.color = simplekml.Color.red
+        line_style.linestyle.width = self.line_width.text()
+            
+        for link in self.controller.view.links.values():
+            line = kml.newlinestring(name=link.name, description=link.description) 
+            line.coords = link.coords
+            line.style = line_style
+            
+        filepath = QFileDialog.getSaveFileName(
+                                               self, 
+                                               'KML export', 
+                                               'project', 
+                                               '.kml'
+                                               )
+        selected_file = ''.join(filepath)
+        kml.save(selected_file)
+        self.close()
+        
+    def choose_path(self):
+        path = 'Choose an icon'
+        filepath = ''.join(QFileDialog.getOpenFileName(self, path, path))
+        self.path_edit.setText(filepath)
+        self.path = filepath
 
 class PyEarth(QMainWindow):
     def __init__(self, path_app):        
@@ -168,6 +240,9 @@ class PyEarth(QMainWindow):
         menu_bar.addAction(import_project)
         menu_bar.addAction(kml_export)
         
+        # KML export window
+        self.kml_export_window = GoogleEarthExport(self)
+        
         # 3D OpenGL view
         self.view = View()
         self.view.setFocusPolicy(Qt.StrongFocus)
@@ -191,35 +266,7 @@ class PyEarth(QMainWindow):
             self.view.generate_objects()
             
     def kml_export(self):
-        kml = simplekml.Kml()
-        
-        path_node = 'https://raw.githubusercontent.com/afourmy/pyEarth/master/images/node.png'
-        point_style = simplekml.Style()
-        point_style.labelstyle.color = simplekml.Color.blue
-        point_style.labelstyle.scale = 2
-        point_style.iconstyle.icon.href = path_node
-        for node in self.view.nodes.values():
-            point = kml.newpoint(name=node.name, description=node.description)
-            point.coords = node.coords
-            point.style = point_style
-            
-        line_style = simplekml.Style()
-        line_style.linestyle.color = simplekml.Color.red
-        line_style.linestyle.width = 2
-            
-        for link in self.view.links.values():
-            line = kml.newlinestring(name=link.name, description=link.description) 
-            line.coords = link.coords
-            line.style = line_style
-            
-        filepath = QFileDialog.getSaveFileName(
-                                               self, 
-                                               'KML export', 
-                                               'project', 
-                                               '.kml'
-                                               )
-        selected_file = ''.join(filepath)
-        kml.save(selected_file)
+        self.kml_export_window.show()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
