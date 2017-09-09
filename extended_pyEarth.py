@@ -1,14 +1,23 @@
+import pyproj
+import shapefile
+import shapely.geometry
 import sys
-import pyproj, shapefile, shapely.geometry
-import xlrd
+import warnings
 from inspect import stack
-from math import sin, radians
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from os.path import abspath, dirname, join, pardir
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QGridLayout, 
                                     QMainWindow, QWidget, QOpenGLWidget)
+try:
+    import simplekml
+except ImportError:
+    warnings.warn('simplekml not installed: export to google earth disabled')
+try:
+    import xlrd
+except ImportError:
+    warnings.warn('xlrd not installed: import of project disabled')
     
 class View(QOpenGLWidget):
     
@@ -24,7 +33,6 @@ class View(QOpenGLWidget):
     def initializeGL(self):
         glMatrixMode(GL_PROJECTION)
         self.create_polygons()
-        
         glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 60.0)
 
     def paintGL(self):
@@ -41,8 +49,6 @@ class View(QOpenGLWidget):
             glCallList(self.polygons)
         if hasattr(self, 'objects'):
             glCallList(self.objects)
-        
-        # self.create_nodes()
         glPopMatrix()
         
         glMatrixMode(GL_MODELVIEW)
@@ -83,9 +89,9 @@ class View(QOpenGLWidget):
             glTranslatef(*node.ccef)
             node = gluNewQuadric()
             gluQuadricNormals(node, GLU_SMOOTH)
-            glColor(255, 255, 0)
+            glColor(0, 0, 0)
             glEnable(GL_DEPTH_TEST)
-            gluSphere(node, 0.05, 100, 100)
+            gluSphere(node, 0.02, 100, 100)
             glPopMatrix()
         for link in self.links.values():
             glColor(255, 0, 0)
@@ -94,16 +100,7 @@ class View(QOpenGLWidget):
             glVertex3f(*link.destination.ccef)
             glEnd()
         glEndList()
-        
-    def create_link(self, source, destination):
-        glColor(255, 0, 0)
-        # x1, y1, z1 = self.LLH_to_ECEF(source.latitude, source.longitude, 70000)
-        # x2, y2, z2 = self.LLH_to_ECEF(destination.latitude, destination.longitude, 70000)
-        glBegin(GL_LINES)
-        glVertex3f(*source.ccef)
-        glVertex3f(*destination.ccef)
-        glEnd()
-        
+                
     def create_polygons(self):
         self.polygons = glGenLists(1)
         glNewList(self.polygons, GL_COMPILE)
@@ -136,6 +133,7 @@ class Node():
     
     def __init__(self, controller, **kwargs):
         self.__dict__.update(kwargs)
+        self.coords = [(float(self.longitude), float(self.latitude))]
         controller.view.nodes[self.name] = self
         
 class Link():
@@ -162,6 +160,8 @@ class PyEarth(QMainWindow):
         import_shapefile.triggered.connect(self.import_shapefile)
         import_project = QAction('Import project', self)
         import_project.triggered.connect(self.import_project)
+        kml_export = QAction('KML export', self)
+        kml_export.triggered.connect(self.kml_export)
         menu_bar.addAction(import_shapefile)
         menu_bar.addAction(import_project)
         
@@ -177,26 +177,32 @@ class PyEarth(QMainWindow):
         self.view.create_polygons()
         
     def import_project(self):
-        filepath = QFileDialog.getOpenFileName(
-                                            self, 
-                                            'Import project', 
-                                            self.path_projects
-                                            )[0]
+        filepath = QFileDialog.getOpenFileName(self, 'Import project', 
+                                                        self.path_projects)[0]
         book = xlrd.open_workbook(filepath)
         
-        # import nodes
-        nodes_sheet = book.sheet_by_name('nodes')
-        properties = nodes_sheet.row_values(0)
-        for row_index in range(1, nodes_sheet.nrows):
-            Node(self, **dict(zip(properties, nodes_sheet.row_values(row_index))))
-        self.view.generate_objects()
+        # import of objects
+        for obj_type, obj_class in (('nodes', Node), ('links', Link)):
+            sheet = book.sheet_by_name(obj_type)
+            properties = sheet.row_values(0)
+            for row in range(1, sheet.nrows):
+                obj_class(self, **dict(zip(properties, sheet.row_values(row))))
+            self.view.generate_objects()
+            
+    def kml_export(self):
+        pass
+        kml = simplekml.Kml()
         
-        # import links
-        nodes_sheet = book.sheet_by_name('links')
-        properties = nodes_sheet.row_values(0)
-        for row_index in range(1, nodes_sheet.nrows):
-            Link(self, **dict(zip(properties, nodes_sheet.row_values(row_index))))
-        self.view.generate_objects()
+        # node_style = simplekml.Style()
+        # node_style.labelstyle.color = simplekml.Color.red
+        # node_style.labelstyle.scale = 2
+        # node_style.iconstyle.icon.href = '
+        # for node in self.view.nodes.values():
+        #     point = kml.newpoint(
+        #                         name = node.name, 
+        #                         description = node.description, 
+        #                         coords = node.coords
+        #                         )
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
