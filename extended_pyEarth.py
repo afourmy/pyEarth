@@ -65,7 +65,7 @@ class View(QOpenGLWidget):
     def mouseMoveEvent(self, event):
         dx, dy = event.x() - self.last_pos.x(), event.y() - self.last_pos.y()
         if event.buttons() == Qt.LeftButton:
-            self.rx, self.ry = self.rx + 8*dy, self.ry + 8*dx
+            self.rx, self.ry = self.rx - 8*dy, self.ry - 8*dx
         elif event.buttons() == Qt.RightButton:
             self.cx, self.cy = self.cx - dx/50, self.cy + dy/50
         self.last_pos = event.pos()
@@ -142,6 +142,7 @@ class Link():
         self.__dict__.update(kwargs)
         self.source = controller.view.nodes[kwargs['source']]
         self.destination = controller.view.nodes[kwargs['destination']]
+        self.coords = [self.source.coords[0], self.destination.coords[0]]
         controller.view.links[self.name] = self
 
 class PyEarth(QMainWindow):
@@ -162,8 +163,10 @@ class PyEarth(QMainWindow):
         import_project.triggered.connect(self.import_project)
         kml_export = QAction('KML export', self)
         kml_export.triggered.connect(self.kml_export)
+        
         menu_bar.addAction(import_shapefile)
         menu_bar.addAction(import_project)
+        menu_bar.addAction(kml_export)
         
         # 3D OpenGL view
         self.view = View()
@@ -180,8 +183,6 @@ class PyEarth(QMainWindow):
         filepath = QFileDialog.getOpenFileName(self, 'Import project', 
                                                         self.path_projects)[0]
         book = xlrd.open_workbook(filepath)
-        
-        # import of objects
         for obj_type, obj_class in (('nodes', Node), ('links', Link)):
             sheet = book.sheet_by_name(obj_type)
             properties = sheet.row_values(0)
@@ -190,19 +191,35 @@ class PyEarth(QMainWindow):
             self.view.generate_objects()
             
     def kml_export(self):
-        pass
         kml = simplekml.Kml()
         
-        # node_style = simplekml.Style()
-        # node_style.labelstyle.color = simplekml.Color.red
-        # node_style.labelstyle.scale = 2
-        # node_style.iconstyle.icon.href = '
-        # for node in self.view.nodes.values():
-        #     point = kml.newpoint(
-        #                         name = node.name, 
-        #                         description = node.description, 
-        #                         coords = node.coords
-        #                         )
+        path_node = 'https://raw.githubusercontent.com/afourmy/pyEarth/master/images/node.png'
+        point_style = simplekml.Style()
+        point_style.labelstyle.color = simplekml.Color.blue
+        point_style.labelstyle.scale = 2
+        point_style.iconstyle.icon.href = path_node
+        for node in self.view.nodes.values():
+            point = kml.newpoint(name=node.name, description=node.description)
+            point.coords = node.coords
+            point.style = point_style
+            
+        line_style = simplekml.Style()
+        line_style.linestyle.color = simplekml.Color.red
+        line_style.linestyle.width = 2
+            
+        for link in self.view.links.values():
+            line = kml.newlinestring(name=link.name, description=link.description) 
+            line.coords = link.coords
+            line.style = line_style
+            
+        filepath = QFileDialog.getSaveFileName(
+                                               self, 
+                                               'KML export', 
+                                               'project', 
+                                               '.kml'
+                                               )
+        selected_file = ''.join(filepath)
+        kml.save(selected_file)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
