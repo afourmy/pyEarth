@@ -118,9 +118,7 @@ class View(QOpenGLWidget):
             polygon = shapely.geometry.shape(polygon)
             if polygon.geom_type == 'Polygon':
                 polygon = [polygon]
-            for land in polygon:
-                longitudes, latitudes = land.exterior.coords.xy
-                yield zip(longitudes, latitudes)
+            yield from (zip(*land.exterior.coords.xy) for land in polygon)
         
     def LLH_to_ECEF(self, lat, lon, alt):
         ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
