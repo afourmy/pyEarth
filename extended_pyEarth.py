@@ -151,14 +151,11 @@ class GoogleEarthExport(QWidget):
         self.controller = controller
         self.setWindowTitle('Export to Google Earth')
         
-        layout = QGridLayout()
-        
-        node_size = QLabel('Node size')
+        node_size = QLabel('Node label size')
         self.node_size = QLineEdit('2')
         
-        self.path_edit = QLineEdit()
         path = 'https://raw.githubusercontent.com/afourmy/pyEarth/master/images/node.png'
-        self.path_edit.setText(path)
+        self.path_edit = QLineEdit(path)
         
         line_width = QLabel('Line width')
         self.line_width = QLineEdit('2')
@@ -172,11 +169,11 @@ class GoogleEarthExport(QWidget):
         layout = QGridLayout()
         layout.addWidget(node_size, 0, 0)
         layout.addWidget(self.node_size, 0, 1)
-        layout.addWidget(self.path_edit, 1, 0, 1, 2)
+        layout.addWidget(self.path_edit, 1, 1)
         layout.addWidget(line_width, 2, 0)
         layout.addWidget(self.line_width, 2, 1)
-        layout.addWidget(path_to_icon, 3, 0)
-        layout.addWidget(export, 3, 1)
+        layout.addWidget(path_to_icon, 1, 0)
+        layout.addWidget(export, 3, 0, 1, 2)
         self.setLayout(layout)
         
     def kml_export(self):
