@@ -22,17 +22,16 @@ class View(QOpenGLWidget):
     def initializeGL(self):
         glMatrixMode(GL_PROJECTION)
         self.create_polygons()
-        glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 60.0)
+        glFrustum(-1, 1, -1, 1, 5, 1000)
 
     def paintGL(self):
         glColor(0, 0, 255)
         glEnable(GL_DEPTH_TEST)
         glBegin(GL_POLYGON)
         for vertex in range(0, 100):
-            angle  = float(vertex)*2.0*pi/100
-            glVertex3f(cos(angle)*6378137/1000000, sin(angle)*6378137/1000000, 0.0)
+            angle, radius = float(vertex)*2.0*pi/100, 6378137/1000000
+            glVertex3f(cos(angle)*radius, sin(angle)*radius, 0.0)
         glEnd()
-        
         if hasattr(self, 'polygons'):
             glPushMatrix()
             glRotated(self.rx/16, 1, 0, 0)
@@ -40,7 +39,6 @@ class View(QOpenGLWidget):
             glRotated(self.rz/16, 0, 0, 1)
             glCallList(self.polygons)
             glPopMatrix()
-        
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         gluLookAt(self.x, self.y, self.z, self.cx, self.cy, self.cz, 0, 1, 0)
@@ -50,7 +48,7 @@ class View(QOpenGLWidget):
         self.last_pos = event.pos()
         
     def wheelEvent(self, event):
-        self.z += -1.5 if event.angleDelta().y() > 0 else 1.5
+        self.z += -2 if event.angleDelta().y() > 0 else 2
 
     def mouseMoveEvent(self, event):
         dx, dy = event.x() - self.last_pos.x(), event.y() - self.last_pos.y()
@@ -90,16 +88,15 @@ class View(QOpenGLWidget):
     def polygon_tesselator(self, polygon):    
         vertices, tess = [], gluNewTess()
         gluTessCallback(tess, GLU_TESS_EDGE_FLAG_DATA, lambda *args: None)
-        gluTessCallback(tess, GLU_TESS_VERTEX, lambda vertex: vertices.append(vertex))
-        gluTessCallback(tess, GLU_TESS_COMBINE, lambda vertex, *args: vertex)
+        gluTessCallback(tess, GLU_TESS_VERTEX, lambda v: vertices.append(v))
+        gluTessCallback(tess, GLU_TESS_COMBINE, lambda v, *args: v)
         gluTessCallback(tess, GLU_TESS_END, lambda: None)
         
         gluTessBeginPolygon(tess, 0)
         gluTessBeginContour(tess)
         for lon, lat in polygon.exterior.coords:
-            x, y, z = self.LLH_to_ECEF(lat, lon, 0)
-            point3d = (x, y, z)
-            gluTessVertex(tess, point3d, point3d)
+            point = self.LLH_to_ECEF(lat, lon, 0)
+            gluTessVertex(tess, point, point)
         gluTessEndContour(tess)
         gluTessEndPolygon(tess)
         gluDeleteTess(tess)
@@ -110,9 +107,7 @@ class View(QOpenGLWidget):
         polygons = sf.shapes() 
         for polygon in polygons:
             polygon = shapely.geometry.shape(polygon)
-            if polygon.geom_type == 'Polygon':
-                polygon = [polygon]
-            yield from polygon
+            yield from [polygon] if polygon.geom_type == 'Polygon' else polygon
         
     def LLH_to_ECEF(self, lat, lon, alt):
         ecef, lla = pyproj.Proj(proj='geocent'), pyproj.Proj(proj='latlong')

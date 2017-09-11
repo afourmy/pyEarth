@@ -4,6 +4,7 @@ import shapely.geometry
 import sys
 import warnings
 from inspect import stack
+from math import cos, pi, sin
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from os.path import abspath, dirname, join, pardir
@@ -32,13 +33,16 @@ class View(QOpenGLWidget):
     def initializeGL(self):
         glMatrixMode(GL_PROJECTION)
         self.create_polygons()
-        glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 60.0)
+        glFrustum(-1, 1, -1, 1, 5, 1000)
 
     def paintGL(self):
-        glEnable(GL_DEPTH_TEST)
-        self.quad = gluNewQuadric()
         glColor(0, 0, 255)
-        self.sphere = gluSphere(self.quad, 6378137/1000000 - 0.025, 100, 100)
+        glEnable(GL_DEPTH_TEST)
+        glBegin(GL_POLYGON)
+        for vertex in range(0, 100):
+            angle, radius = float(vertex)*2.0*pi/100, 6378137/1000000
+            glVertex3f(cos(angle)*radius, sin(angle)*radius, 0.0)
+        glEnd()
         
         glPushMatrix()
         glRotated(self.rx/16, 1, 0, 0)
@@ -64,7 +68,7 @@ class View(QOpenGLWidget):
     def mouseMoveEvent(self, event):
         dx, dy = event.x() - self.last_pos.x(), event.y() - self.last_pos.y()
         if event.buttons() == Qt.LeftButton:
-            self.rx, self.ry = self.rx - 8*dy, self.ry - 8*dx
+            self.rx, self.ry = self.rx + 8*dy, self.ry + 8*dx
         elif event.buttons() == Qt.RightButton:
             self.cx, self.cy = self.cx - dx/50, self.cy + dy/50
         self.last_pos = event.pos()
@@ -77,7 +81,7 @@ class View(QOpenGLWidget):
                 self.timer.start()
             
     def rotate(self):  
-        self.rx, self.ry = self.rx + 6, self.ry + 6
+        self.rx, self.ry = self.rx + 36, self.ry + 36
         
     def generate_objects(self):
         self.objects = glGenLists(1)
@@ -104,21 +108,42 @@ class View(QOpenGLWidget):
         self.polygons = glGenLists(1)
         glNewList(self.polygons, GL_COMPILE)
         for polygon in self.draw_polygons():
-            glColor(0, 255, 0)
+            glLineWidth(2)
             glBegin(GL_LINE_LOOP)
-            for (lon, lat) in polygon:
+            glColor(0, 0, 0)
+            for lon, lat in polygon.exterior.coords:
                 glVertex3f(*self.LLH_to_ECEF(lat, lon, 1))
             glEnd()
+            glColor(0, 255, 0)
+            glBegin(GL_TRIANGLES)
+            for vertex in self.polygon_tesselator(polygon):
+                glVertex(*vertex)
+            glEnd()
         glEndList()
+        
+    def polygon_tesselator(self, polygon):    
+        vertices, tess = [], gluNewTess()
+        gluTessCallback(tess, GLU_TESS_EDGE_FLAG_DATA, lambda *args: None)
+        gluTessCallback(tess, GLU_TESS_VERTEX, lambda v: vertices.append(v))
+        gluTessCallback(tess, GLU_TESS_COMBINE, lambda v, *args: v)
+        gluTessCallback(tess, GLU_TESS_END, lambda: None)
+        
+        gluTessBeginPolygon(tess, 0)
+        gluTessBeginContour(tess)
+        for lon, lat in polygon.exterior.coords:
+            point = self.LLH_to_ECEF(lat, lon, 0)
+            gluTessVertex(tess, point, point)
+        gluTessEndContour(tess)
+        gluTessEndPolygon(tess)
+        gluDeleteTess(tess)
+        return vertices
         
     def draw_polygons(self):
         sf = shapefile.Reader(self.shapefile)       
         polygons = sf.shapes() 
         for polygon in polygons:
             polygon = shapely.geometry.shape(polygon)
-            if polygon.geom_type == 'Polygon':
-                polygon = [polygon]
-            yield from (zip(*land.exterior.coords.xy) for land in polygon)
+            yield from [polygon] if polygon.geom_type == 'Polygon' else polygon
         
     def LLH_to_ECEF(self, lat, lon, alt):
         ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
