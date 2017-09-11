@@ -27,7 +27,6 @@ class View(QOpenGLWidget):
             setattr(self, coord, 50 if coord == 'z' else 0)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.rotate)
-        self.shapefile = 'C:\\Users\\minto\\Desktop\\pyGISS\\shapefiles\\World countries.shp'
         self.nodes, self.links = {}, {}
 
     def initializeGL(self):
@@ -139,6 +138,8 @@ class View(QOpenGLWidget):
         return vertices
         
     def draw_polygons(self):
+        if not hasattr(self, 'shapefile'):
+            return
         sf = shapefile.Reader(self.shapefile)       
         polygons = sf.shapes() 
         for polygon in polygons:
