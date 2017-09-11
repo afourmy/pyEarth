@@ -146,9 +146,8 @@ class View(QOpenGLWidget):
             yield from [polygon] if polygon.geom_type == 'Polygon' else polygon
         
     def LLH_to_ECEF(self, lat, lon, alt):
-        ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
-        lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')    
-        x, y, z = pyproj.transform(lla, ecef, lon, lat, alt, radians=False)
+        ecef, llh = pyproj.Proj(proj='geocent'), pyproj.Proj(proj='latlong')
+        x, y, z = pyproj.transform(llh, ecef, lon, lat, alt, radians=False)
         return x/1000000, y/1000000, z/1000000
         
 class Node():

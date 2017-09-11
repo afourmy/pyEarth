@@ -71,7 +71,7 @@ class View(QOpenGLWidget):
     def create_polygons(self):
         self.polygons = glGenLists(1)
         glNewList(self.polygons, GL_COMPILE)
-        for polygon in self.draw_polygons():
+        for polygon in self.extract_polygons():
             glLineWidth(2)
             glBegin(GL_LINE_LOOP)
             glColor(0, 0, 0)
@@ -102,7 +102,7 @@ class View(QOpenGLWidget):
         gluDeleteTess(tess)
         return vertices
         
-    def draw_polygons(self):
+    def extract_polygons(self):
         sf = shapefile.Reader(self.shapefile)       
         polygons = sf.shapes() 
         for polygon in polygons:
@@ -110,8 +110,8 @@ class View(QOpenGLWidget):
             yield from [polygon] if polygon.geom_type == 'Polygon' else polygon
         
     def LLH_to_ECEF(self, lat, lon, alt):
-        ecef, lla = pyproj.Proj(proj='geocent'), pyproj.Proj(proj='latlong')
-        x, y, z = pyproj.transform(lla, ecef, lon, lat, alt, radians=False)
+        ecef, llh = pyproj.Proj(proj='geocent'), pyproj.Proj(proj='latlong')
+        x, y, z = pyproj.transform(llh, ecef, lon, lat, alt, radians=False)
         return x/1000000, y/1000000, z/1000000
 
 class PyEarth(QMainWindow):
