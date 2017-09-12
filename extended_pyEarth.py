@@ -8,7 +8,8 @@ from math import cos, pi, sin
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from os.path import abspath, dirname, join, pardir
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 try:
     import simplekml
@@ -246,19 +247,32 @@ class PyEarth(QMainWindow):
         # paths
         self.path_shapefiles = join(path_app, pardir, 'shapefiles')
         self.path_projects = join(path_app, pardir, 'projects')
+        path_icons = join(path_app, 'icons')
         
         # menu
         menu_bar = self.menuBar()
-        import_shapefile = QAction('Import shapefile', self)
+        
+        import_shapefile_icon = QIcon(join(path_icons, 'globe.png'))
+        import_shapefile = QAction(import_shapefile_icon, 'Import a shapefile', self)
+        import_shapefile.setStatusTip('Import a shapefile')
         import_shapefile.triggered.connect(self.import_shapefile)
-        import_project = QAction('Import project', self)
+        
+        import_project_icon = QIcon(join(path_icons, 'import_project.png'))
+        import_project = QAction(import_project_icon, 'Import a Excel project', self)
+        import_project.setStatusTip('Import a project (Excel format)')
         import_project.triggered.connect(self.import_project)
-        kml_export = QAction('KML export', self)
+        
+        kml_export_icon = QIcon(join(path_icons, 'kml_export.png'))
+        kml_export = QAction(kml_export_icon, 'KML Export', self)
+        kml_export.setStatusTip('Import current project to Google Earth (KML)')
         kml_export.triggered.connect(self.kml_export)
         
-        menu_bar.addAction(import_shapefile)
-        menu_bar.addAction(import_project)
-        menu_bar.addAction(kml_export)
+        toolbar = self.addToolBar('')
+        toolbar.resize(1500, 1500)
+        toolbar.setIconSize(QSize(70, 70))
+        toolbar.addAction(import_shapefile)
+        toolbar.addAction(import_project)
+        toolbar.addAction(kml_export)
         
         # KML export window
         self.kml_export_window = GoogleEarthExport(self)
