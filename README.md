@@ -4,24 +4,6 @@ pyEarth is a lightweight 3D visualization of the Earth implemented with pyQt and
 Users can import shapefiles to visualize maps in 3D, create objects (nodes or links) using Excel, and 
 export a project to Google Earth.
 
-# pyEarth dependencies
-
-pyQt5 is required: it can be download from the [Riverband website](https://www.riverbankcomputing.com/software/pyqt/download5)
-
-PyEarth relies on three Python libraries:
-
-* pyshp, used for reading shapefiles.
-* shapely, used for converting a multipolygon into a set of polygons
-* pyproj, used for translating geographic coordinates (longitude and latitude) into projected coordinates
-
-Before using pyEarth, you must make sure all these libraries are properly installed:
-
-```
-pip install pyshp
-pip install shapely
-pip install pyproj
-```
-
 # pyEarth versions
 
 ## Standard version (pyEarth.py, < 150 lines)
@@ -154,6 +136,24 @@ You can contact me at my personal email address:
 ```
 
 or on the [Network to Code slack](http://networktocode.herokuapp.com "Network to Code slack"). (@minto)
+
+# pyEarth dependencies
+
+pyQt5 is required: it can be download from the [Riverband website](https://www.riverbankcomputing.com/software/pyqt/download5)
+
+PyEarth relies on three Python libraries:
+
+* pyshp, used for reading shapefiles.
+* shapely, used for converting a multipolygon into a set of polygons
+* pyproj, used for translating geographic coordinates (longitude and latitude) into projected coordinates
+
+Before using pyEarth, you must make sure all these libraries are properly installed:
+
+```
+pip install pyshp
+pip install shapely
+pip install pyproj
+```
 
 # Credits
 

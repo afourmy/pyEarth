@@ -28,7 +28,7 @@ class View(QOpenGLWidget):
         glEnable(GL_DEPTH_TEST)
         glBegin(GL_POLYGON)
         for vertex in range(0, 100):
-            angle, radius = float(vertex)*2.0*pi/100, 6378137/1000000
+            angle, radius = float(vertex)*2.0*pi/100, 6.370997
             glVertex3f(cos(angle)*radius, sin(angle)*radius, 0.0)
         glEnd()
         if hasattr(self, 'polygons'):
