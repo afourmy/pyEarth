@@ -39,6 +39,11 @@ A few shapefiles are available for testing in the 'pyEarth/shapefiles' folder (w
 
 ## Extended version (extended_pyEarth.py, < 300 lines)
 
+![extended pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/extended_pyEarth.png)
+
+In the extended version, besides the import of shapefiles, nodes and links can be created on the map by importing an Excel file (an example is available in the 'PyGISS/projects' folder).
+A pyEarth project can then be exported to Google Earth (a KML file is created).
+
 # How it works
 
 A point on the earth is defined as a longitude and a latitude.
@@ -46,21 +51,17 @@ Longitude and latitude are angles.
 
 ![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_0.png)
 
-We need to convert a point on a sphere (3D) into a point on a map (2D). 
+We need to convert a point defined with geodetic coordinates ('Latitude, Longitude, Height', or LLH system) to a point defined with carthesian coordinates ('x, y, z', or ECEF system, "Earth-Centered, Earth-Fixed", also known as ECR ("Earth-Centered Rotational").
 
 ![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_1.png)
 
-To convert geographic coordinates (longitude and latitude) into projected coordinates (planar coordinates), we use a library called pyproj.
+To convert geodetic coordinates to carthesian coordinates, we use a library called pyproj.
 
 ![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_2.png)
 
 In order to create a 3D space, we use pyQt and python interface to OpenGL: pyOpenGL.
-
-Once we've chosen a framework, we need a widget that supports the drawing of 2D graphical items. 
-In tkinter, this widget is called a Canvas; in pyQt, it is a QGraphicsView.
-
-This widget has functions to create rectangles, circles, and most importantly, polygons.
-Indeed, as demonstrated below with Italy, a map can be represented as a set of polygons.
+pyQt has a special widget for OpenGL support, QOpenGLWidget.
+We use this widget along with pyOpenGL function to create the 3D objects and implement a freefly camera.
 
 ![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_3.png)
 
@@ -86,8 +87,9 @@ The resulting algorithm is:
 - Use pyshp to read the shapefile
 - Extract the shapes of the shapefile
 - When a shape is a multipolygon, decompose it into multiple polygons with shapely
-- Use pyproj to convert the shape's geographic coordinates into projected coordinates
-- Use the GUI framework method to draw the polygons
+- Use pyproj to convert the shape's geodetic coordinates to carthesian coordinates
+- Triangulate the polygon with the tesselation function
+- Use OpenGL functions to create the polygon in the 3D space
 ``` 
 
 Below is the algorithm implemented with the pyQt framework:
