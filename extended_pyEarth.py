@@ -297,7 +297,7 @@ class PyEarth(QMainWindow):
             properties = sheet.row_values(0)
             for row in range(1, sheet.nrows):
                 obj_class(self, **dict(zip(properties, sheet.row_values(row))))
-            self.view.generate_objects()
+        self.view.generate_objects()
             
     def kml_export(self):
         self.kml_export_window.show()
@@ -307,6 +307,6 @@ if __name__ == '__main__':
     path_app = dirname(abspath(stack()[0][1]))
     window = PyEarth(path_app)
     window.setWindowTitle('pyEarth: a lightweight 3D visualization of the earth')
-    window.setFixedSize(900, 900)
+    window.setFixedSize(1200, 1200)
     window.show()
     sys.exit(app.exec_())    
