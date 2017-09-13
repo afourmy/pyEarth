@@ -4,6 +4,8 @@ pyEarth is a lightweight 3D visualization of the Earth implemented with pyQt and
 Users can import shapefiles to visualize maps in 3D, create objects (nodes or links) using Excel, and 
 export a project to Google Earth.
 
+![pyEarth demo](https://github.com/afourmy/PyEarth/blob/master/readme/pyEarth.gif)
+
 # pyEarth versions
 
 ## Standard version (pyEarth.py, < 150 lines)
