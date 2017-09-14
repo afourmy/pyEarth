@@ -10,11 +10,9 @@ export a project to Google Earth.
 
 ## Standard version (pyEarth.py, < 150 lines)
 
-![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/pyEarth.png)
-
 The standard version implements pyEarth in less than 150 lines of code.
 Maps can be created by importing shapefiles, and the following bindings are implemented:
-* the scroll wheel can be used for zooming in and out.
+* the scroll wheel for zooming in and out.
 * the left-click button rotates the earth in any direction
 * the right-click button moves the view in the 3-dimensional space (like a viewfinder)
 * pressing space will start a continuous rotation of the earth
@@ -22,8 +20,6 @@ Maps can be created by importing shapefiles, and the following bindings are impl
 A few shapefiles are available for testing in the 'pyEarth/shapefiles' folder (world countries, continents, US).
 
 ## Extended version (extended_pyEarth.py, < 300 lines)
-
-![extended pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/extended_pyEarth.png)
 
 In the extended version, besides the import of shapefiles, nodes and links can be created on the map by importing an Excel file (an example is available in the 'PyGISS/projects' folder).
 A pyEarth project can then be exported to Google Earth (a KML file is created).
