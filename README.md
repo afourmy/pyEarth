@@ -53,7 +53,7 @@ The coordinates of a shapefile are geodetic coordinates: a point on the earth is
 We need to convert a point defined with geodetic coordinates ('Latitude, Longitude, Height', the LLH system) to a point defined with carthesian coordinates ('x, y, z', the ECEF system, "Earth-Centered, Earth-Fixed", also known as ECR, "Earth-Centered Rotational").
 To make that conversion, we will use a library called "pyproj".
 
-![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_5.png)
+![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_5.JPG)
 
 ## 3D visualization
 
@@ -64,12 +64,12 @@ Qt has a special widget for for rendering OpenGL graphics, QOpenGLWidget. QOpenG
 
 The tricky part about drawing polygons in OpenGL is that only convex polygons can be filled with a color. As a consequence, non-convex polygons must be broken down into convex subpolygons. pyEarth uses GLU tesselator function to triangulate the polygons, i.e break them down into triangles.
 
-![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_7.png)
+![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_7.JPG)
 
 To move through the 3D space, we will implement a basic camera moving forward and
 backward along the z-axis. We use the GLU function gluLookAt for that purpose.
 
-![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_8.png)
+![pyEarth](https://github.com/afourmy/pyEarth/blob/master/readme/how_it_works_8.jpg)
 
 The resulting algorithm is:
 
