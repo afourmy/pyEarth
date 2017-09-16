@@ -24,6 +24,8 @@ A few shapefiles are available for testing in the 'pyEarth/shapefiles' folder (w
 In the extended version, besides the import of shapefiles, nodes and links can be created on the map by importing an Excel file (an example is available in the 'PyGISS/projects' folder).
 A pyEarth project can then be exported to Google Earth (a KML file is created).
 
+![pyEarth demo](https://github.com/afourmy/PyEarth/blob/master/readme/google_earth.PNG)
+
 # How it works
 
 ## Polygon extraction
