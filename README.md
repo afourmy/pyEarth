@@ -1,8 +1,11 @@
 # Introduction
 
 pyEarth is a lightweight 3D visualization of the Earth implemented with pyQt and OpenGL: it is the 3D counterpart of [pyGISS](https://github.com/afourmy/pyGISS "pyGISS").
-Users can import shapefiles to visualize maps in 3D, create objects (nodes or links) using Excel, and 
-export a project to Google Earth.
+
+Users can:
+* import shapefiles to visualize maps in 3D.
+* create objects (nodes or links) using Excel.
+* export a project to Google Earth.
 
 ![pyEarth demo](https://github.com/afourmy/PyEarth/blob/master/readme/pyEarth.gif)
 
@@ -13,9 +16,9 @@ export a project to Google Earth.
 The standard version implements pyEarth in less than 150 lines of code.
 Maps can be created by importing shapefiles, and the following bindings are implemented:
 * the scroll wheel for zooming in and out.
-* the left-click button rotates the earth in any direction
-* the right-click button moves the view in the 3-dimensional space (like a viewfinder)
-* pressing space will start a continuous rotation of the earth
+* the left-click button rotates the earth in any direction.
+* the right-click button moves the view in the 3-dimensional space (like a viewfinder).
+* pressing space will start a continuous rotation of the earth.
 
 A few shapefiles are available for testing in the 'pyEarth/shapefiles' folder (world countries, continents, US).
 
