@@ -20,7 +20,7 @@ Maps can be created by importing shapefiles, and the following bindings are impl
 * the right-click button moves the view in the 3-dimensional space (like a viewfinder).
 * pressing space will start a continuous rotation of the earth.
 
-A few shapefiles are available for testing in the 'pyEarth/shapefiles' folder (world countries, continents, US).
+A few shapefiles are available for testing in the 'pyEarth/shapefiles' folder (world countries, US).
 
 ## Extended version (extended_pyEarth.py, < 300 lines)
 
