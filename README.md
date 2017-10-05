@@ -1,6 +1,6 @@
 # Introduction
 
-pyEarth is a lightweight 3D visualization of the Earth implemented with pyQt and OpenGL.
+pyEarth is a lightweight 3D visualization of the Earth implemented with pyQt and OpenGL: it is the 3D counterpart of [pyGISS](https://github.com/afourmy/pyGISS "pyGISS").
 Users can import shapefiles to visualize maps in 3D, create objects (nodes or links) using Excel, and 
 export a project to Google Earth.
 
