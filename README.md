@@ -93,11 +93,8 @@ Below is the algorithm implemented with the pyQt framework:
 
 # function to extract the polygons (shapefile library) and convert multipolygons 
 # into polygons when necessary (shapely library)
-def extract_polygons(self):
-    if not hasattr(self, 'shapefile'):
-        return
-    sf = shapefile.Reader(self.shapefile)       
-    polygons = sf.shapes() 
+def extract_polygons(self):      
+    polygons = shapefile.Reader(self.shapefile).shapes() 
     for polygon in polygons:
         polygon = shapely.geometry.shape(polygon)
         yield from [polygon] if polygon.geom_type == 'Polygon' else polygon
