@@ -1,0 +1,4 @@
+pyQt5
+pyshp
+shapely
+pyproj

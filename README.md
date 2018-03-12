@@ -151,17 +151,5 @@ PyEarth relies on three Python libraries:
 Before using pyEarth, you must make sure all these libraries are properly installed:
 
 ```
-pip install pyshp
-pip install shapely
-pip install pyproj
+pip install -r requirements
 ```
-
-# Credits
-
-[OpenGL](https://www.opengl.org): 2D and 3D graphics application programming interface.
-
-[pyshp](https://github.com/GeospatialPython/pyshp): A library to read and write ESRI Shapefiles.
-
-[shapely](https://github.com/Toblerity/Shapely): A library for the manipulation and analysis of geometric objects in the Cartesian plane.
-
-[pyproj](https://github.com/jswhit/pyproj): Python interface to PROJ4 library for cartographic transformations
